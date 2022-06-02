@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/VulkanMemoryAllocator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/glfw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/range-v3" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/spdlog" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/yaml-cpp" vcs="Git" />
+  </component>
+</project>

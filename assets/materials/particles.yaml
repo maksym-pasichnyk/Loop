@@ -1,0 +1,2 @@
+vert: assets/shaders/particles.vert.spv
+frag: assets/shaders/particles.frag.spv

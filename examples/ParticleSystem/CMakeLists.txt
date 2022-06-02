@@ -1,0 +1,3 @@
+add_executable(ParticleSystem src/ParticleSystem.cpp)
+set_target_properties(ParticleSystem PROPERTIES CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(ParticleSystem PRIVATE Loop)
