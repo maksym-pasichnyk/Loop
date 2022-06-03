@@ -131,6 +131,9 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
     color_blend_state_create_info.setPAttachments(&color_blend_attachment);
     color_blend_state_create_info.setBlendConstants({0.0f, 0.0f, 0.0f, 0.0f});
 
+    std::vector<vk::DescriptorSetLayout> descriptor_set_layouts{};
+    descriptor_set_layouts.emplace_back(Graphics::get_instance()->get_global_descriptor_set_layout());
+
     // descriptor set layouts array
 //        auto descriptor_set_layouts = std::array{
 //                Graphics::Get()->per_frame_descriptor_set_layout,
@@ -144,7 +147,7 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
 //
     // layout
     vk::PipelineLayoutCreateInfo pipeline_layout_create_info{};
-//        pipeline_layout_create_info.setSetLayouts(descriptor_set_layouts);
+    pipeline_layout_create_info.setSetLayouts(descriptor_set_layouts);
 //        pipeline_layout_create_info.setPushConstantRangeCount(1);
 //        pipeline_layout_create_info.setPPushConstantRanges(&push_constant_range);
 

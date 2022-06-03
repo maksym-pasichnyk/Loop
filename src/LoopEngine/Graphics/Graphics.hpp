@@ -6,6 +6,8 @@
 #include <vulkan/vulkan.hpp>
 
 namespace LoopEngine::Graphics {
+    struct Material;
+    struct UniformBuffer;
     struct Graphics final : LoopEngine::Core::Singleton<Graphics> {
     public:
         Graphics();
@@ -32,29 +34,28 @@ namespace LoopEngine::Graphics {
             return command_buffers[current_frame];
         }
 
-        auto begin_single_time_commands() -> vk::CommandBuffer;
+        [[nodiscard]] auto get_global_descriptor_set_layout() const -> vk::DescriptorSetLayout {
+            return global_descriptor_set_layout;
+        }
 
+        [[nodiscard]] auto get_current_frame_global_descriptor_set() const -> vk::DescriptorSet {
+            return global_descriptor_sets[current_frame];
+        }
+
+        [[nodiscard]] auto begin_single_time_commands() -> vk::CommandBuffer;
         void submit_single_time_commands(vk::CommandBuffer cmd);
-
-        auto setup_frame() -> vk::Result;
-
-        auto submit_frame() -> vk::Result;
+        [[nodiscard]] auto setup_frame() -> vk::Result;
+        [[nodiscard]] auto submit_frame() -> vk::Result;
 
     private:
         void create_surface();
-
         void create_swapchain();
-
         void recreate_swapchain();
-
         void create_sync_objects();
-
         void create_command_pools();
-
         void create_command_buffers();
-
+        void create_default_descriptors();
         void create_default_render_pass();
-
         void create_default_framebuffers();
 
     private:
@@ -85,5 +86,12 @@ namespace LoopEngine::Graphics {
         vk::Extent2D surface_extent{};
         vk::RenderPass default_render_pass{};
         std::vector<vk::Framebuffer> default_framebuffers{};
+
+        vk::DescriptorPool global_descriptor_pool{};
+        vk::DescriptorSetLayout global_descriptor_set_layout{};
+        std::vector<vk::DescriptorSet> global_descriptor_sets{};
+        std::vector<std::shared_ptr<UniformBuffer>> global_uniform_buffers;
     };
+
+    extern void bind_global_descriptor_sets(vk::CommandBuffer cmd, const Material& material, int set);
 }

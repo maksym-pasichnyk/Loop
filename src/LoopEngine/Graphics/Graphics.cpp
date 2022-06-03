@@ -1,9 +1,14 @@
 #include "Graphics.hpp"
 #include "Context.hpp"
+#include "Material.hpp"
+#include "UniformBuffer.hpp"
+#include "LoopEngine/Camera/Camera.hpp"
+#include "LoopEngine/Camera/CameraSystem.hpp"
 #include "LoopEngine/Platform/Display.hpp"
 
 #include <set>
 #include "GLFW/glfw3.h"
+#include "glm/mat4x4.hpp"
 #include "spdlog/spdlog.h"
 #include "range/v3/range/conversion.hpp"
 
@@ -11,6 +16,7 @@ using LoopEngine::Core::Singleton;
 using LoopEngine::Platform::Display;
 using LoopEngine::Graphics::Context;
 using LoopEngine::Graphics::Graphics;
+using LoopEngine::Camera::get_default_camera;
 
 template<> Graphics* Singleton<Graphics>::instance = nullptr;
 
@@ -29,7 +35,7 @@ Graphics::Graphics() {
     create_sync_objects();
     create_command_pools();
     create_command_buffers();
-//        create_global_descriptors();
+    create_default_descriptors();
     create_default_render_pass();
     create_default_framebuffers();
 //        create_material_descriptor_pool();
@@ -51,15 +57,12 @@ Graphics::~Graphics() {
 
         Context::get_instance()->device.freeCommandBuffers(command_pools[i], 1, &command_buffers[i]);
         Context::get_instance()->device.destroyCommandPool(command_pools[i]);
-//            destroy_buffer(global_uniform_buffers[i]);
+
+        release_uniform_buffer(*global_uniform_buffers[i]);
     }
-
+    Context::get_instance()->device.destroyDescriptorSetLayout(global_descriptor_set_layout);
+    Context::get_instance()->device.destroyDescriptorPool(global_descriptor_pool);
     Context::get_instance()->device.destroyRenderPass(default_render_pass);
-
-//        Context::get_instance()->device.destroyDescriptorPool(per_frame_descriptor_pool);
-//        Context::get_instance()->device.destroyDescriptorSetLayout(per_frame_descriptor_set_layout);
-//        Context::get_instance()->device.destroyDescriptorPool(per_material_descriptor_pool);
-//        Context::get_instance()->device.destroyDescriptorSetLayout(per_material_descriptor_set_layout);
 
     Context::get_instance()->device.destroySwapchainKHR(swapchain);
     Context::get_instance()->instance.destroySurfaceKHR(surface);
@@ -122,6 +125,14 @@ auto Graphics::setup_frame() -> vk::Result {
     }
 
     check(Context::get_instance()->device.resetFences(1, &fences[current_frame]));
+
+    auto camera = get_default_camera();
+
+    glm::mat4 data[2];
+    data[0] = camera->get_projection_matrix();
+    data[1] = camera->get_view_matrix();
+
+    update_uniform_buffer(*global_uniform_buffers[current_frame], data, sizeof(data));
 
     vk::CommandBufferBeginInfo begin_info{};
     begin_info.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -293,6 +304,55 @@ void Graphics::create_command_buffers() {
     }
 }
 
+void Graphics::create_default_descriptors() {
+    std::array<vk::DescriptorPoolSize, 1> pool_sizes{};
+    pool_sizes[0].setType(vk::DescriptorType::eUniformBuffer);
+    pool_sizes[0].setDescriptorCount(maxFramesInFlight);
+
+    vk::DescriptorPoolCreateInfo pool_create_info{};
+    pool_create_info.setMaxSets(maxFramesInFlight);
+    pool_create_info.setPoolSizes(pool_sizes);
+    global_descriptor_pool = Context::get_instance()->device.createDescriptorPool(pool_create_info);
+
+    std::array<vk::DescriptorSetLayoutBinding, 1> set_layout_bindings{};
+    set_layout_bindings[0].setBinding(0);
+    set_layout_bindings[0].setDescriptorType(vk::DescriptorType::eUniformBuffer);
+    set_layout_bindings[0].setDescriptorCount(1);
+    set_layout_bindings[0].setStageFlags(vk::ShaderStageFlagBits::eVertex);
+
+    vk::DescriptorSetLayoutCreateInfo set_layout_create_info{};
+    set_layout_create_info.setBindings(set_layout_bindings);
+    global_descriptor_set_layout = Context::get_instance()->device.createDescriptorSetLayout(set_layout_create_info);
+
+    global_descriptor_sets.resize(maxFramesInFlight);
+    global_uniform_buffers.resize(maxFramesInFlight);
+
+    std::vector<vk::WriteDescriptorSet> write_descriptor_sets(maxFramesInFlight);
+    std::vector<vk::DescriptorBufferInfo> descriptor_buffer_infos(maxFramesInFlight);
+
+    for (size_t i = 0; i < maxFramesInFlight; ++i) {
+        global_uniform_buffers[i] = create_uniform_buffer(sizeof(glm::mat4[2]));
+
+        // create descriptor set
+        vk::DescriptorSetAllocateInfo set_alloc_info{};
+        set_alloc_info.setDescriptorPool(global_descriptor_pool);
+        set_alloc_info.setSetLayouts(global_descriptor_set_layout);
+        global_descriptor_sets[i] = Context::get_instance()->device.allocateDescriptorSets(set_alloc_info).front();
+
+        // update descriptor set
+        descriptor_buffer_infos[i].setBuffer(global_uniform_buffers[i]->handle);
+        descriptor_buffer_infos[i].setOffset(0);
+        descriptor_buffer_infos[i].setRange(sizeof(glm::mat4[2]));
+
+        write_descriptor_sets[i].setDstSet(global_descriptor_sets[i]);
+        write_descriptor_sets[i].setDstBinding(0);
+        write_descriptor_sets[i].setDescriptorCount(1);
+        write_descriptor_sets[i].setDescriptorType(vk::DescriptorType::eUniformBuffer);
+        write_descriptor_sets[i].setPBufferInfo(&descriptor_buffer_infos[i]);
+    }
+    Context::get_instance()->device.updateDescriptorSets(write_descriptor_sets, {});
+}
+
 void Graphics::create_default_render_pass() {
     vk::AttachmentDescription color_attachment{};
     color_attachment.setFormat(vk::Format::eB8G8R8A8Unorm);
@@ -389,4 +449,9 @@ void Graphics::create_default_framebuffers() {
 
         default_framebuffers[i] = Context::get_instance()->device.createFramebuffer(framebuffer_create_info);
     }
+}
+
+void LoopEngine::Graphics::bind_global_descriptor_sets(vk::CommandBuffer cmd, const Material& material, int set) {
+    auto ds = Graphics::get_instance()->get_current_frame_global_descriptor_set();
+    cmd.bindDescriptorSets(material.bind_point, material.pipeline_layout, set, ds, {});
 }
