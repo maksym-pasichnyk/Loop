@@ -7,13 +7,6 @@
 #include "LoopEngine/Core/DisableCopyAndMove.hpp"
 
 namespace LoopEngine::Camera {
-    enum class ClearFlags {
-        None = 0,
-        Color = 1,
-        Depth = 2,
-        Stencil = 4,
-    };
-
     struct Camera : LoopEngine::Core::DisableCopyAndMove {
         void set_clear_color(glm::vec4 color) {
             clear_color = color;
@@ -22,14 +15,6 @@ namespace LoopEngine::Camera {
         [[nodiscard]] auto get_clear_color() const -> const glm::vec4 & {
             return clear_color;
         }
-
-//    void set_clear_flags(ClearFlags flags) {
-//        clear_flags = flags;
-//    }
-
-//    auto get_clear_flags() const -> ClearFlags {
-//        return clear_flags;
-//    }
 
         void set_perspective(float fov, float aspect, float near, float far) {
             projection = glm::perspectiveLH_ZO(glm::radians(fov), aspect, near, far);
@@ -42,11 +27,31 @@ namespace LoopEngine::Camera {
         }
 
         void set_look_at(glm::vec3 eye, glm::vec3 center, glm::vec3 up) {
-            view = glm::lookAtRH(eye, center, up);
+            auto quat = glm::quatLookAtLH(glm::normalize(center - eye), up);
+
+            position = eye;
+            rotation = glm::degrees(glm::eulerAngles(quat));
+            orientation = glm::mat4_cast(quat);
+            view = glm::inverse(glm::translate(glm::mat4(1.0f), position) * orientation);
         }
 
         [[nodiscard]] auto get_projection_matrix() const -> const glm::mat4 & {
             return projection;
+        }
+
+        void set_position(glm::vec3 _position) {
+            position = _position;
+            view = glm::inverse(glm::translate(glm::mat4(1.0f), position) * orientation);
+        }
+
+        void set_rotation(glm::vec3 _rotation) {
+            rotation = _rotation;
+            orientation = glm::yawPitchRoll(
+                glm::radians(rotation.y),
+                glm::radians(rotation.x),
+                glm::radians(rotation.z)
+            );
+            view = glm::inverse(glm::translate(glm::mat4(1.0f), position) * orientation);
         }
 
         void set_transform(glm::vec3 _position, glm::vec3 _rotation) {
@@ -54,9 +59,9 @@ namespace LoopEngine::Camera {
             rotation = _rotation;
 
             orientation = glm::yawPitchRoll(
-                    glm::radians(rotation.y),
-                    glm::radians(rotation.x),
-                    glm::radians(rotation.z)
+                glm::radians(rotation.y),
+                glm::radians(rotation.x),
+                glm::radians(rotation.z)
             );
             view = glm::inverse(glm::translate(glm::mat4(1.0f), position) * orientation);
         }
@@ -84,6 +89,5 @@ namespace LoopEngine::Camera {
         glm::mat4 projection = glm::mat4(1.0f);
         glm::mat4 orientation = glm::mat4(1.0f);
         glm::vec4 clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
-        ClearFlags clear_flags = ClearFlags::None;
     };
 }
