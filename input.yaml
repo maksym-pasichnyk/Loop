@@ -1,0 +1,11 @@
+- type: axis
+  name: move
+  positive: 87
+  negative: 83
+- type: axis
+  name: strafe
+  positive: 68
+  negative: 65
+- type: button
+  name: sprint
+  keycode: 340

@@ -2,7 +2,7 @@
 #include "Context.hpp"
 
 auto LoopEngine::Graphics::get_texture_from_assets(const std::string& filename) -> std::shared_ptr<Texture> {
-    throw std::runtime_error("LoopEngine::Graphics::get_texture_from_assets is implemented");
+    throw std::runtime_error("LoopEngine::Graphics::get_texture_from_assets is not implemented");
 }
 
 void LoopEngine::Graphics::release_texture(const Texture &texture) {

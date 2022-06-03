@@ -9,6 +9,7 @@
 #include "glm/vec2.hpp"
 
 namespace LoopEngine::Input {
+    // todo: send events to EventSystem
     struct InputSystem final : LoopEngine::Core::Singleton<InputSystem> {
         void save_config(const std::string &filename);
         void load_config(const std::string &filename);

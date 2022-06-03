@@ -194,3 +194,8 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
 
     return material;
 }
+
+void LoopEngine::Graphics::release_material(const LoopEngine::Graphics::Material &material) {
+    context().device.destroyPipeline(material.pipeline);
+    context().device.destroyPipelineLayout(material.pipeline_layout);
+}

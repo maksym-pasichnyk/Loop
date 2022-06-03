@@ -22,9 +22,13 @@ namespace LoopEngine::Event {
             return function(object, static_cast<Args&&>(args)...);
         }
 
+        explicit constexpr operator bool() const noexcept {
+            return function != nullptr;
+        }
+
     private:
         static auto static_invoke(void *object, T... args) -> R {
-            return (*(FunctionType *) object)(object, static_cast<T&&>(args)...);
+            return ((R(*)(T...)) object)(static_cast<T&&>(args)...);
         }
 
         void *object = nullptr;
