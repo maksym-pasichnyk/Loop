@@ -11,7 +11,7 @@ namespace LoopEngine::Graphics {
         vk::PipelineLayout pipeline_layout;
     };
 
-    extern auto get_module_from_assets(const std::string& path) -> vk::ShaderModule;
+    extern auto get_module_from_assets(const std::string& filename) -> vk::ShaderModule;
     extern auto get_material_from_assets(const std::string& filename) -> std::shared_ptr<Material>;
 
     extern void release_material(const Material& material);

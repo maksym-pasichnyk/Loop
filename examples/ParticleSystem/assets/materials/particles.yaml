@@ -1,5 +1,5 @@
-vert: assets/shaders/particles.vert.spv
-frag: assets/shaders/particles.frag.spv
+vert: shaders/particles.vert
+frag: shaders/particles.frag
 bindings:
   - { binding: 0, stride: 12, instanced: false }
   - { binding: 1, stride: 12, instanced: true }

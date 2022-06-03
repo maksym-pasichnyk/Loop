@@ -4,38 +4,29 @@
 #include "glm/vec3.hpp"
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
+#include "LoopEngine/Asset/AssetSystem.hpp"
 
-#include <fstream>
+using LoopEngine::Asset::read_file_from_assets;
 
-auto LoopEngine::Graphics::get_module_from_assets(const std::string &path) -> vk::ShaderModule {
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error(fmt::format("Failed to open file: {}", path));
+auto LoopEngine::Graphics::get_module_from_assets(const std::string &filename) -> vk::ShaderModule {
+    auto data = read_file_from_assets(filename);
+    if (data.empty()) {
+        return nullptr;
     }
-
-    auto file_size = size_t(file.tellg());
-    std::vector<char> buffer(file_size);
-
-    file.seekg(0);
-    file.read(buffer.data(), std::streamsize(file_size));
-    file.close();
-
     vk::ShaderModuleCreateInfo create_info{};
-    create_info.setCodeSize(file_size);
-    create_info.setPCode(reinterpret_cast<uint32_t *>(buffer.data()));
+    create_info.setCodeSize(data.size());
+    create_info.setPCode(reinterpret_cast<uint32_t *>(data.data()));
 
     return context().device.createShaderModule(create_info);
 }
 
 auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename) -> std::shared_ptr<Material> {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        spdlog::error("Failed to open file {}", filename);
+    auto data = read_file_from_assets(filename);
+    if (data.empty()) {
         return nullptr;
     }
 
-    YAML::Node config = YAML::Load(file);
+    auto config = YAML::Load(data);
     if (!config.IsMap()) {
         spdlog::error("Failed to parse file {}", filename);
         return nullptr;

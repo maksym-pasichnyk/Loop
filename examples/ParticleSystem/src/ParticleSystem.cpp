@@ -115,7 +115,7 @@ void ParticleSystem::init(const InitEvent& event) {
     }
     vbo[1] = create_vertex_buffer(sizeof(glm::vec3) * positions.size());
 
-    material = get_material_from_assets("assets/materials/particles.yaml");
+    material = get_material_from_assets("materials/particles.yaml");
 
     auto camera = get_default_camera();
     camera->set_perspective(60.0f, 16.0f / 12.0f, 0.1f, 1000.0f);

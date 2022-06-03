@@ -1,5 +1,6 @@
 #include "InputSystem.hpp"
 #include "LoopEngine/Platform/Display.hpp"
+#include "LoopEngine/Asset/AssetSystem.hpp"
 
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
@@ -9,6 +10,7 @@
 using LoopEngine::Core::Singleton;
 using LoopEngine::Platform::Display;
 using LoopEngine::Input::InputSystem;
+using LoopEngine::Asset::read_file_from_assets;
 
 template<> InputSystem* Singleton<InputSystem>::instance = nullptr;
 
@@ -42,13 +44,12 @@ void InputSystem::save_config(const std::string &filename) {
 }
 
 void InputSystem::load_config(const std::string &filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        spdlog::error("Failed to open file {}", filename);
+    auto data = read_file_from_assets(filename);
+    if (data.empty()) {
         return;
     }
 
-    YAML::Node config = YAML::Load(file);
+    auto config = YAML::Load(data);
     if (config.IsNull()) {
         return;
     }
@@ -83,12 +84,19 @@ void InputSystem::remove_listener(InputController *controller) {
 }
 
 auto InputSystem::get_axis(const std::string &name) const -> float {
-    auto& axis = axis_bindings.at(name);
-    return axis.positive_value - axis.negative_value;
+    auto it = axis_bindings.find(name);
+    if (it == axis_bindings.end()) {
+        return 0.0f;
+    }
+    return it->second.positive_value - it->second.negative_value;
 }
 
 auto InputSystem::get_button(const std::string &name) const -> bool {
-    return button_states[size_t(button_bindings.at(name))] == ButtonState::Pressed;
+    auto it = button_bindings.find(name);
+    if (it == button_bindings.end()) {
+        return false;
+    }
+    return button_states[size_t(it->second)] == ButtonState::Pressed;
 }
 
 auto InputSystem::get_mouse_delta() const -> const glm::vec2 & {

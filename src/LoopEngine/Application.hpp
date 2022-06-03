@@ -6,6 +6,7 @@
 #include "LoopEngine/Input/InputSystem.hpp"
 #include "LoopEngine/Event/EventSystem.hpp"
 #include "LoopEngine/Camera/CameraSystem.hpp"
+#include "LoopEngine/Asset/AssetSystem.hpp"
 
 namespace LoopEngine {
     struct Application {
@@ -16,6 +17,7 @@ namespace LoopEngine {
         LoopEngine::Platform::Display display;
         LoopEngine::Graphics::Context context{};
         LoopEngine::Graphics::Graphics graphics{};
+        LoopEngine::Asset::AssetSystem asset_system{};
         LoopEngine::Input::InputSystem input_system{};
         LoopEngine::Event::EventSystem event_system{};
         LoopEngine::Camera::CameraSystem camera_system{};
