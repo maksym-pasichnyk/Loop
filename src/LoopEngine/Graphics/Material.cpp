@@ -59,20 +59,33 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
         fragment_shader_stage_create_info
     };
 
-    // vertex bindings and attributes
-    std::array vertex_binding_descriptions{
-        vk::VertexInputBindingDescription{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-        vk::VertexInputBindingDescription{1, sizeof(glm::vec3), vk::VertexInputRate::eInstance},
-    };
+    std::vector<vk::VertexInputBindingDescription> bindings{};
+    std::vector<vk::VertexInputAttributeDescription> attributes{};
 
-    std::array vertex_attribute_descriptions{
-        vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32B32Sfloat, 0},
-        vk::VertexInputAttributeDescription{1, 1, vk::Format::eR32G32B32Sfloat, 0},
-    };
+    for (auto&& node : config["bindings"]) {
+        vk::VertexInputBindingDescription description{};
+        description.setBinding(node["binding"].as<int>());
+        description.setStride(node["stride"].as<int>());
+        if (node["instanced"].as<bool>()) {
+            description.setInputRate(vk::VertexInputRate::eInstance);
+        } else {
+            description.setInputRate(vk::VertexInputRate::eVertex);
+        }
+        bindings.emplace_back(description);
+    }
+
+    for (auto&& node : config["attributes"]) {
+        vk::VertexInputAttributeDescription description{};
+        description.setLocation(node["location"].as<int>());
+        description.setBinding(node["binding"].as<int>());
+        description.setFormat(vk::Format::eR32G32B32Sfloat);
+        description.setOffset(node["offset"].as<int>());
+        attributes.emplace_back(description);
+    }
 
     vk::PipelineVertexInputStateCreateInfo vertex_input_create_info{};
-    vertex_input_create_info.setVertexBindingDescriptions(vertex_binding_descriptions);
-    vertex_input_create_info.setVertexAttributeDescriptions(vertex_attribute_descriptions);
+    vertex_input_create_info.setVertexBindingDescriptions(bindings);
+    vertex_input_create_info.setVertexAttributeDescriptions(attributes);
 
     vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info{};
     input_assembly_create_info.setTopology(vk::PrimitiveTopology::eTriangleList);
@@ -146,8 +159,8 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
     depth_stencil_state_create_info.setStencilTestEnable(false);
 
     vk::DynamicState dynamic_states[] = {
-            vk::DynamicState::eViewport,
-            vk::DynamicState::eScissor
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor
     };
 
     vk::PipelineDynamicStateCreateInfo dynamic_state_create_info{};

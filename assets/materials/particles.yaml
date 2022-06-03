@@ -1,2 +1,8 @@
 vert: assets/shaders/particles.vert.spv
 frag: assets/shaders/particles.frag.spv
+bindings:
+  - { binding: 0, stride: 12, instanced: false }
+  - { binding: 1, stride: 12, instanced: true }
+attributes:
+  - { location: 0, binding: 0, offset: 0, format: VK_FORMAT_R32G32B32_SFLOAT }
+  - { location: 1, binding: 1, offset: 0, format: VK_FORMAT_R32G32B32_SFLOAT }

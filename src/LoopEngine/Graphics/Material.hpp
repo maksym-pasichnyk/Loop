@@ -5,6 +5,8 @@
 
 namespace LoopEngine::Graphics {
     struct Material {
+        vk::PipelineBindPoint bind_point = vk::PipelineBindPoint::eGraphics;
+
         vk::Pipeline pipeline;
         vk::PipelineLayout pipeline_layout;
     };
