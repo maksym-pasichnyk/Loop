@@ -11,13 +11,27 @@ namespace LoopEngine::Event {
     struct EventHandler : IEventHandler {
         using Event = T;
 
-        constexpr EventHandler() noexcept = default;
-        constexpr EventHandler(Delegate<void(const Event&)> delegate) noexcept : delegate(delegate) {}
+        template<auto function, typename Self>
+        constexpr auto connect(Self *object) noexcept {
+            delegate = Delegate{object, as_static_function<function>()};
+        }
+        constexpr auto connect(void(*function)(const Event&)) noexcept {
+            delegate = Delegate{function};
+        }
+
+        template<typename Self>
+        constexpr auto connect(Self *object, void(*function)(Self*, const Event&)) noexcept {
+            delegate = Delegate{object, function};
+        }
+
+        constexpr void reset() noexcept {
+            delegate = {};
+        }
 
     private:
         void handle(void *payload) override {
             if (delegate) {
-                delegate(static_cast<const Event&>(*static_cast<const T*>(payload)));
+                delegate(*static_cast<const Event*>(payload));
             }
         }
 
