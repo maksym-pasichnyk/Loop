@@ -11,7 +11,9 @@ using LoopEngine::Event::EventSystem;
 using LoopEngine::Camera::CameraSystem;
 
 using LoopEngine::Event::InitEvent;
+using LoopEngine::Event::BeforeDrawEvent;
 using LoopEngine::Event::DrawEvent;
+using LoopEngine::Event::AfterDrawEvent;
 using LoopEngine::Event::QuitEvent;
 using LoopEngine::Event::UpdateEvent;
 using LoopEngine::Event::EventHandler;
@@ -70,7 +72,9 @@ void Application::run() {
         cmd.setScissor(0, rect);
         cmd.setViewport(0, viewport);
 
+        event_system.send_event(BeforeDrawEvent{cmd});
         event_system.send_event(DrawEvent{cmd});
+        event_system.send_event(AfterDrawEvent{cmd});
 
         cmd.endRenderPass();
 

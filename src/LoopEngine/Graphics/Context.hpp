@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef VMA_DEBUG_LOG
-#define VMA_DEBUG_LOG(format, ...) do { printf(format "\n" __VA_OPT__(,) __VA_ARGS__); } while(false)
-#endif
-
 #include <cstdio>
 #include <cstdlib>
 #include "vk_mem_alloc.h"

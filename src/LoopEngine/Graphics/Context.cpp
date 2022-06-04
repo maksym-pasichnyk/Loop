@@ -1,4 +1,9 @@
 #define VMA_IMPLEMENTATION
+#ifndef NDEBUG
+#ifndef VMA_DEBUG_LOG
+#define VMA_DEBUG_LOG(format, ...) do { printf(format "\n" __VA_OPT__(,) __VA_ARGS__); } while(false)
+#endif
+#endif
 #include "Context.hpp"
 
 #include "GLFW/glfw3.h"
@@ -73,7 +78,9 @@ Context::~Context() {
 
     device.destroy();
 
+#ifndef NDEBUG
     instance.destroyDebugUtilsMessengerEXT(debug_utils);
+#endif
     instance.destroy();
 
     spdlog::info("Vulkan cleaned up");
@@ -93,12 +100,17 @@ void Context::create_instance() {
     auto raw_extensions = glfwGetRequiredInstanceExtensions(&count);
     auto extensions = std::vector<const char *>(raw_extensions, raw_extensions + count);
 
+
+#ifndef NDEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
     extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
     // create a vector of layer names
     std::vector<const char*> layers{};
+#ifndef NDEBUG
     layers.push_back("VK_LAYER_KHRONOS_validation");
+#endif
 
     vk::InstanceCreateInfo instance_info{};
     instance_info.setPApplicationInfo(&app_info);
@@ -110,6 +122,7 @@ void Context::create_instance() {
 }
 
 void Context::create_debug_utils() {
+#ifndef NDEBUG
     vk::DebugUtilsMessengerCreateInfoEXT debug_info{};
     debug_info.setMessageSeverity(
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
@@ -125,6 +138,7 @@ void Context::create_debug_utils() {
     debug_info.setPfnUserCallback(debug_callback);
 
     debug_utils = instance.createDebugUtilsMessengerEXT(debug_info);
+#endif
 }
 
 void Context::select_physical_device() {

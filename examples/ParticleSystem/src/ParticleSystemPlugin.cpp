@@ -1,5 +1,6 @@
 #include "ParticleSystemPlugin.hpp"
 #include "ParticleSystem.hpp"
+#include "ImGuiPlugin.hpp"
 
 #include "LoopEngine/Camera/CameraSystem.hpp"
 #include "LoopEngine/Input/InputSystem.hpp"
@@ -9,8 +10,6 @@
 #include "spdlog/spdlog.h"
 #include "glm/vec3.hpp"
 #include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_vulkan.h"
 
 using LoopEngine::Application;
 using LoopEngine::Platform::Display;
@@ -152,30 +151,27 @@ ParticleSystemPlugin::ParticleSystemPlugin() {
     init_event_handler.connect<&ParticleSystemPlugin::init>(this);
     draw_event_handler.connect<&ParticleSystemPlugin::draw>(this);
     update_event_handler.connect<&ParticleSystemPlugin::update>(this);
+    imgui_draw_event_handler.connect<&ParticleSystemPlugin::on_imgui_draw>(this);
     press_button_event_handler.connect<&ParticleSystemPlugin::on_press_button>(this);
 
     get_global_event_queue()->add_event_handler(&init_event_handler);
     get_global_event_queue()->add_event_handler(&draw_event_handler);
     get_global_event_queue()->add_event_handler(&update_event_handler);
+    get_global_event_queue()->add_event_handler(&imgui_draw_event_handler);
     get_global_event_queue()->add_event_handler(&press_button_event_handler);
-
-    create_imgui_context();
 
     firework_particle_system = std::make_shared<FireworkParticleSystem>();
 }
 
 ParticleSystemPlugin::~ParticleSystemPlugin() {
-    destroy_imgui_context();
-
     get_global_event_queue()->remove_event_handler(&init_event_handler);
     get_global_event_queue()->remove_event_handler(&draw_event_handler);
     get_global_event_queue()->remove_event_handler(&update_event_handler);
+    get_global_event_queue()->remove_event_handler(&imgui_draw_event_handler);
     get_global_event_queue()->remove_event_handler(&press_button_event_handler);
 }
 
 void ParticleSystemPlugin::init(const InitEvent &event) {
-    spdlog::info("ParticleSystemPlugin::init()");
-
     auto camera = get_default_camera();
     camera->set_perspective(60.0f, 16.0f / 12.0f, 0.1f, 1000.0f);
     camera->set_transform(glm::vec3(0.0f, 0.0f, -50.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -187,65 +183,8 @@ void ParticleSystemPlugin::update(const UpdateEvent &event) {
     firework_particle_system->update(event);
 }
 
-void ParticleSystemPlugin::create_imgui_context() {
-    vk::DescriptorPoolSize pool_size{};
-    pool_size.setType(vk::DescriptorType::eCombinedImageSampler);
-    pool_size.setDescriptorCount(1);
-
-    vk::DescriptorPoolCreateInfo pool_info{};
-    pool_info.setMaxSets(1);
-    pool_info.setPoolSizeCount(1);
-    pool_info.setPPoolSizes(&pool_size);
-    descriptor_pool = context().device.createDescriptorPool(pool_info);
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplGlfw_InitForVulkan(Display::get_native_window_handle(), true);
-
-    ImGui_ImplVulkan_InitInfo info{};
-    info.Instance = context().instance;
-    info.PhysicalDevice = context().physical_device;
-    info.Device = context().device;
-    info.QueueFamily = context().graphics_queue_family_index;
-    info.Queue = context().graphics_queue;
-    info.DescriptorPool = descriptor_pool;
-    info.MinImageCount = Graphics::get_instance()->get_swapchain_min_image_count();
-    info.ImageCount = Graphics::get_instance()->get_swapchain_images_count();
-    info.CheckVkResultFn = [](VkResult result) {
-        check(vk::Result(result));
-    };
-    ImGui_ImplVulkan_Init(&info, Graphics::get_instance()->get_default_render_pass());
-
-    io.Fonts->AddFontDefault();
-
-    auto cmd = Graphics::get_instance()->begin_single_time_commands();
-    ImGui_ImplVulkan_CreateFontsTexture(cmd);
-    Graphics::get_instance()->submit_single_time_commands(cmd);
-}
-
-void ParticleSystemPlugin::destroy_imgui_context() {
-    context().device.destroyDescriptorPool(descriptor_pool);
-
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-}
-
 void ParticleSystemPlugin::draw(const DrawEvent &event) {
     firework_particle_system->draw(event);
-
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::Begin("Particle System", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), event.cmd, VK_NULL_HANDLE);
 }
 
 void ParticleSystemPlugin::update_camera(const UpdateEvent &event) const {
@@ -301,9 +240,16 @@ void ParticleSystemPlugin::on_press_button(const ButtonPressEvent& event) {
     }
 }
 
+void ParticleSystemPlugin::on_imgui_draw(const ImGuiDrawEvent& event) {
+    ImGui::Begin("Particle System", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::End();
+}
+
 auto main(int argc, char** argv) -> int {
     Application application("Particle System", 800, 600);
-    ParticleSystemPlugin particle_system_plugin{};
+    application.add_plugin<ImGuiPlugin>();
+    application.add_plugin<ParticleSystemPlugin>();
     application.run();
     return EXIT_SUCCESS;
 }

@@ -14,6 +14,7 @@ using LoopEngine::Event::UpdateEvent;
 using LoopEngine::Event::EventHandler;
 using LoopEngine::Input::ButtonPressEvent;
 
+struct ImGuiDrawEvent;
 struct FireworkParticleSystem;
 struct ParticleSystemPlugin {
     ParticleSystemPlugin();
@@ -27,9 +28,8 @@ private:
     void update_camera(const UpdateEvent& event) const;
 
 private:
-    void create_imgui_context();
-    void destroy_imgui_context();
     void on_press_button(const ButtonPressEvent& event);
+    void on_imgui_draw(const ImGuiDrawEvent& event);
 
 private:
     bool lock_mouse = false;
@@ -39,9 +39,6 @@ private:
     EventHandler<InitEvent> init_event_handler{};
     EventHandler<DrawEvent> draw_event_handler{};
     EventHandler<UpdateEvent> update_event_handler{};
-
+    EventHandler<ImGuiDrawEvent> imgui_draw_event_handler{};
     EventHandler<ButtonPressEvent> press_button_event_handler{};
-
-    // ImGui
-    vk::DescriptorPool descriptor_pool{};
 };

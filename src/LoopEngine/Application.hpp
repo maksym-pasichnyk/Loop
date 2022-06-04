@@ -17,6 +17,11 @@ namespace LoopEngine {
             return &event_system;
         }
 
+        template<typename T>
+        void add_plugin() {
+            plugins.emplace_back(std::make_shared<T>());
+        }
+
     private:
         LoopEngine::Platform::Display display;
         LoopEngine::Graphics::Context context{};
@@ -25,5 +30,6 @@ namespace LoopEngine {
         LoopEngine::Input::InputSystem input_system{};
         LoopEngine::Event::EventSystem event_system{};
         LoopEngine::Camera::CameraSystem camera_system{};
+        std::vector<std::shared_ptr<void>> plugins{};
     };
 }
