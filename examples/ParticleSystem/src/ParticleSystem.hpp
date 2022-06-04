@@ -31,6 +31,14 @@ struct ParticleSystemUpdateEvent {
     float dt;
 };
 
+struct ParticleSpawnEvent {
+    Particle& particle;
+};
+
+struct ParticleDeathEvent {
+    Particle& particle;
+};
+
 struct ParticleSystem {
     explicit ParticleSystem(size_t capacity);
     ~ParticleSystem();

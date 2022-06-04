@@ -70,7 +70,7 @@ void ParticleSystem::update(const UpdateEvent& event) {
     event_system.send_event(ParticleSystemUpdateEvent{ event.dt });
 
     count = 0;
-    for (auto & particle : particles) {
+    for (auto& particle : particles) {
         if (particle.lifetime <= 0.0f) {
             continue;
         }
@@ -79,6 +79,9 @@ void ParticleSystem::update(const UpdateEvent& event) {
         positions[count].position = particle.position;
         positions[count].color = particle.color;
         count++;
+        if (particle.lifetime <= 0.0f) {
+            event_system.send_event(ParticleDeathEvent{ particle });
+        }
     }
     if (count > 0) {
         update_vertex_buffer(*vbo[1], positions.data(), sizeof(VertexData) * count);
