@@ -5,8 +5,10 @@
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
 #include "LoopEngine/Asset/AssetSystem.hpp"
+#include "LoopEngine/Vulkan/Format.hpp"
 
 using LoopEngine::Asset::read_file_from_assets;
+using LoopEngine::Vulkan::get_format_from_string;
 
 auto LoopEngine::Graphics::get_module_from_assets(const std::string &filename) -> vk::ShaderModule {
     auto data = read_file_from_assets(filename);
@@ -69,7 +71,7 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
         vk::VertexInputAttributeDescription description{};
         description.setLocation(node["location"].as<int>());
         description.setBinding(node["binding"].as<int>());
-        description.setFormat(vk::Format::eR32G32B32Sfloat);
+        description.setFormat(get_format_from_string(node["format"].as<std::string>()));
         description.setOffset(node["offset"].as<int>());
         attributes.emplace_back(description);
     }
