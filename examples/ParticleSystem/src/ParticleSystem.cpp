@@ -33,7 +33,7 @@ ParticleSystem::ParticleSystem(size_t capacity) {
     };
 
     vbo[0] = create_vertex_buffer(sizeof(float) * vertices.size());
-    vbo[1] = create_vertex_buffer(sizeof(glm::vec3) * positions.size());
+    vbo[1] = create_vertex_buffer(sizeof(VertexData) * positions.size());
 
     update_vertex_buffer(*vbo[0], vertices.data(), sizeof(float) * vertices.size());
 
@@ -47,7 +47,7 @@ ParticleSystem::~ParticleSystem() {
     release_material(*material);
 }
 
-void ParticleSystem::emit(const glm::vec3 &position, const glm::vec3 &velocity, float lifetime) {
+void ParticleSystem::emit(const glm::vec3 &position, const glm::vec4 &color, const glm::vec3 &velocity, float lifetime) {
     // find an empty slot
     int index = -1;
     for (int i = 0; i < particles.size(); i++) {
@@ -60,11 +60,15 @@ void ParticleSystem::emit(const glm::vec3 &position, const glm::vec3 &velocity, 
     if (index != -1) {
         particles[index].position = position;
         particles[index].velocity = velocity;
+        particles[index].color = color;
         particles[index].lifetime = lifetime;
+        particles[index].time = lifetime;
     }
 }
 
 void ParticleSystem::update(const UpdateEvent& event) {
+    event_system.send_event(ParticleSystemUpdateEvent{ event.dt });
+
     count = 0;
     for (auto & particle : particles) {
         if (particle.lifetime <= 0.0f) {
@@ -72,11 +76,12 @@ void ParticleSystem::update(const UpdateEvent& event) {
         }
         particle.lifetime -= event.dt;
         particle.position += particle.velocity * event.dt;
-
-        positions[count++] = particle.position;
+        positions[count].position = particle.position;
+        positions[count].color = particle.color;
+        count++;
     }
     if (count > 0) {
-        update_vertex_buffer(*vbo[1], positions.data(), sizeof(glm::vec3) * count);
+        update_vertex_buffer(*vbo[1], positions.data(), sizeof(VertexData) * count);
     }
 }
 

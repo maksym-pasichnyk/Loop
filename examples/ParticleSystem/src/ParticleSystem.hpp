@@ -22,24 +22,58 @@ using LoopEngine::Graphics::VertexBuffer;
 struct Particle {
     glm::vec3 position;
     glm::vec3 velocity;
+    glm::vec4 color;
+    float time;
     float lifetime;
+};
+
+struct ParticleSystemUpdateEvent {
+    float dt;
 };
 
 struct ParticleSystem {
     explicit ParticleSystem(size_t capacity);
     ~ParticleSystem();
 
-    void emit(const glm::vec3& position, const glm::vec3 &velocity, float lifetime);
+    void emit(const glm::vec3& position, const glm::vec4 &color, const glm::vec3 &velocity, float lifetime);
     void update(const UpdateEvent& event);
     void draw(const DrawEvent& event);
 
+    [[nodiscard]] auto get_particles() -> std::span<Particle> {
+        return particles;
+    }
+
+    [[nodiscard]] auto get_capacity() const -> size_t {
+        return particles.size();
+    }
+
+    [[nodiscard]] auto get_particles_count() const -> size_t {
+        return count;
+    }
+
+    template<typename T>
+    void add_event_handler(LoopEngine::Event::EventHandler<T>* handler) {
+        event_system.add_event_handler(handler);
+    }
+
+    template<typename T>
+    void remove_event_handler(LoopEngine::Event::EventHandler<T>* handler) {
+        event_system.remove_event_handler(handler);
+    }
+
 private:
+    struct VertexData {
+        alignas(16) glm::vec3 position;
+        alignas(16) glm::vec4 color;
+    };
+
     std::vector<Particle> particles{};
-    std::vector<glm::vec3> positions{};
+    std::vector<VertexData> positions{};
     size_t count = 0;
 
     std::shared_ptr<IndexBuffer> ibo{};
     std::shared_ptr<VertexBuffer> vbo[2]{};
 
     std::shared_ptr<Material> material{};
+    LoopEngine::Event::EventSystem event_system{};
 };

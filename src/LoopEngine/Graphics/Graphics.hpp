@@ -22,6 +22,10 @@ namespace LoopEngine::Graphics {
             return static_cast<int>(images.size());
         }
 
+        [[nodiscard]] auto get_swapchain_min_image_count() const -> int {
+            return min_image_count;
+        }
+
         [[nodiscard]] auto get_default_render_pass() const -> vk::RenderPass {
             return default_render_pass;
         }

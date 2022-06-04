@@ -111,7 +111,7 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
     color_blend_attachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
     color_blend_attachment.setBlendEnable(true);
     color_blend_attachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
-    color_blend_attachment.setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
+    color_blend_attachment.setDstColorBlendFactor(vk::BlendFactor::eOne);
     color_blend_attachment.setColorBlendOp(vk::BlendOp::eAdd);
     color_blend_attachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
     color_blend_attachment.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
