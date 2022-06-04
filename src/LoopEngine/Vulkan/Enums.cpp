@@ -1,7 +1,9 @@
-#include "Format.hpp"
+#include "Enums.hpp"
 
 #include <map>
 #include <string_view>
+
+#include "spdlog/fmt/fmt.h"
 
 using namespace std::string_view_literals;
 
@@ -14,8 +16,8 @@ inline constexpr auto fnv1a(std::string_view str) -> std::uint32_t {
     return hash;
 }
 
-auto LoopEngine::Vulkan::get_format_from_string(const std::string &format) -> vk::Format {
-    switch(fnv1a(format)) {
+auto LoopEngine::Vulkan::get_format_from_string(const std::string &str) -> vk::Format {
+    switch(fnv1a(str)) {
     case fnv1a("Undefined"sv): return vk::Format::eUndefined;
     case fnv1a("R4G4UnormPack8"sv): return vk::Format::eR4G4UnormPack8;
     case fnv1a("R4G4B4A4UnormPack16"sv): return vk::Format::eR4G4B4A4UnormPack16;
@@ -263,6 +265,89 @@ auto LoopEngine::Vulkan::get_format_from_string(const std::string &format) -> vk
     case fnv1a("Pvrtc14BppSrgbBlockIMG"sv): return vk::Format::ePvrtc14BppSrgbBlockIMG;
     case fnv1a("Pvrtc22BppSrgbBlockIMG"sv): return vk::Format::ePvrtc22BppSrgbBlockIMG;
     case fnv1a("Pvrtc24BppSrgbBlockIMG"sv): return vk::Format::ePvrtc24BppSrgbBlockIMG;
+    default: throw std::runtime_error(fmt::format("Unknown format: {}", str));
     }
-    return vk::Format::eUndefined;
+}
+
+auto LoopEngine::Vulkan::get_blend_op_from_string(const std::string &str) -> vk::BlendOp {
+    switch (fnv1a(str)) {
+    case fnv1a("Add"sv): return vk::BlendOp::eAdd;
+    case fnv1a("Subtract"sv): return vk::BlendOp::eSubtract;
+    case fnv1a("ReverseSubtract"sv): return vk::BlendOp::eReverseSubtract;
+    case fnv1a("Min"sv): return vk::BlendOp::eMin;
+    case fnv1a("Max"sv): return vk::BlendOp::eMax;
+    case fnv1a("ZeroEXT"sv): return vk::BlendOp::eZeroEXT;
+    case fnv1a("SrcEXT"sv): return vk::BlendOp::eSrcEXT;
+    case fnv1a("DstEXT"sv): return vk::BlendOp::eDstEXT;
+    case fnv1a("SrcOverEXT"sv): return vk::BlendOp::eSrcOverEXT;
+    case fnv1a("DstOverEXT"sv): return vk::BlendOp::eDstOverEXT;
+    case fnv1a("SrcInEXT"sv): return vk::BlendOp::eSrcInEXT;
+    case fnv1a("DstInEXT"sv): return vk::BlendOp::eDstInEXT;
+    case fnv1a("SrcOutEXT"sv): return vk::BlendOp::eSrcOutEXT;
+    case fnv1a("DstOutEXT"sv): return vk::BlendOp::eDstOutEXT;
+    case fnv1a("SrcAtopEXT"sv): return vk::BlendOp::eSrcAtopEXT;
+    case fnv1a("DstAtopEXT"sv): return vk::BlendOp::eDstAtopEXT;
+    case fnv1a("XorEXT"sv): return vk::BlendOp::eXorEXT;
+    case fnv1a("MultiplyEXT"sv): return vk::BlendOp::eMultiplyEXT;
+    case fnv1a("ScreenEXT"sv): return vk::BlendOp::eScreenEXT;
+    case fnv1a("OverlayEXT"sv): return vk::BlendOp::eOverlayEXT;
+    case fnv1a("DarkenEXT"sv): return vk::BlendOp::eDarkenEXT;
+    case fnv1a("LightenEXT"sv): return vk::BlendOp::eLightenEXT;
+    case fnv1a("ColordodgeEXT"sv): return vk::BlendOp::eColordodgeEXT;
+    case fnv1a("ColorburnEXT"sv): return vk::BlendOp::eColorburnEXT;
+    case fnv1a("HardlightEXT"sv): return vk::BlendOp::eHardlightEXT;
+    case fnv1a("SoftlightEXT"sv): return vk::BlendOp::eSoftlightEXT;
+    case fnv1a("DifferenceEXT"sv): return vk::BlendOp::eDifferenceEXT;
+    case fnv1a("ExclusionEXT"sv): return vk::BlendOp::eExclusionEXT;
+    case fnv1a("InvertEXT"sv): return vk::BlendOp::eInvertEXT;
+    case fnv1a("InvertRgbEXT"sv): return vk::BlendOp::eInvertRgbEXT;
+    case fnv1a("LineardodgeEXT"sv): return vk::BlendOp::eLineardodgeEXT;
+    case fnv1a("LinearburnEXT"sv): return vk::BlendOp::eLinearburnEXT;
+    case fnv1a("VividlightEXT"sv): return vk::BlendOp::eVividlightEXT;
+    case fnv1a("LinearlightEXT"sv): return vk::BlendOp::eLinearlightEXT;
+    case fnv1a("PinlightEXT"sv): return vk::BlendOp::ePinlightEXT;
+    case fnv1a("HardmixEXT"sv): return vk::BlendOp::eHardmixEXT;
+    case fnv1a("HslHueEXT"sv): return vk::BlendOp::eHslHueEXT;
+    case fnv1a("HslSaturationEXT"sv): return vk::BlendOp::eHslSaturationEXT;
+    case fnv1a("HslColorEXT"sv): return vk::BlendOp::eHslColorEXT;
+    case fnv1a("HslLuminosityEXT"sv): return vk::BlendOp::eHslLuminosityEXT;
+    case fnv1a("PlusEXT"sv): return vk::BlendOp::ePlusEXT;
+    case fnv1a("PlusClampedEXT"sv): return vk::BlendOp::ePlusClampedEXT;
+    case fnv1a("PlusClampedAlphaEXT"sv): return vk::BlendOp::ePlusClampedAlphaEXT;
+    case fnv1a("PlusDarkerEXT"sv): return vk::BlendOp::ePlusDarkerEXT;
+    case fnv1a("MinusEXT"sv): return vk::BlendOp::eMinusEXT;
+    case fnv1a("MinusClampedEXT"sv): return vk::BlendOp::eMinusClampedEXT;
+    case fnv1a("ContrastEXT"sv): return vk::BlendOp::eContrastEXT;
+    case fnv1a("InvertOvgEXT"sv): return vk::BlendOp::eInvertOvgEXT;
+    case fnv1a("RedEXT"sv): return vk::BlendOp::eRedEXT;
+    case fnv1a("GreenEXT"sv): return vk::BlendOp::eGreenEXT;
+    case fnv1a("BlueEXT"sv): return vk::BlendOp::eBlueEXT;
+    default: throw std::runtime_error(fmt::format("Unknown blend op: {}", str));
+    }
+}
+
+auto LoopEngine::Vulkan::get_blend_factor_from_string(const std::string &str) -> vk::BlendFactor {
+    switch (fnv1a(str)) {
+    case fnv1a("Zero"): return vk::BlendFactor::eZero;
+    case fnv1a("One"): return vk::BlendFactor::eOne;
+    case fnv1a("SrcColor"): return vk::BlendFactor::eSrcColor;
+    case fnv1a("OneMinusSrcColor"): return vk::BlendFactor::eOneMinusSrcColor;
+    case fnv1a("DstColor"): return vk::BlendFactor::eDstColor;
+    case fnv1a("OneMinusDstColor"): return vk::BlendFactor::eOneMinusDstColor;
+    case fnv1a("SrcAlpha"): return vk::BlendFactor::eSrcAlpha;
+    case fnv1a("OneMinusSrcAlpha"): return vk::BlendFactor::eOneMinusSrcAlpha;
+    case fnv1a("DstAlpha"): return vk::BlendFactor::eDstAlpha;
+    case fnv1a("OneMinusDstAlpha"): return vk::BlendFactor::eOneMinusDstAlpha;
+    case fnv1a("ConstantColor"): return vk::BlendFactor::eConstantColor;
+    case fnv1a("OneMinusConstantColor"): return vk::BlendFactor::eOneMinusConstantColor;
+    case fnv1a("ConstantAlpha"): return vk::BlendFactor::eConstantAlpha;
+    case fnv1a("OneMinusConstantAlpha"): return vk::BlendFactor::eOneMinusConstantAlpha;
+    case fnv1a("SrcAlphaSaturate"): return vk::BlendFactor::eSrcAlphaSaturate;
+    case fnv1a("Src1Color"): return vk::BlendFactor::eSrc1Color;
+    case fnv1a("OneMinusSrc1Color"): return vk::BlendFactor::eOneMinusSrc1Color;
+    case fnv1a("Src1Alpha"): return vk::BlendFactor::eSrc1Alpha;
+    case fnv1a("OneMinusSrc1Alpha"): return vk::BlendFactor::eOneMinusSrc1Alpha;
+    default: throw std::runtime_error(fmt::format("Unknown blend factor: {}", str));
+    }
+    return vk::BlendFactor::eOne;
 }

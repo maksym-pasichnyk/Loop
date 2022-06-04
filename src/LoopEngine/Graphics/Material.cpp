@@ -5,10 +5,12 @@
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
 #include "LoopEngine/Asset/AssetSystem.hpp"
-#include "LoopEngine/Vulkan/Format.hpp"
+#include "LoopEngine/Vulkan/Enums.hpp"
 
 using LoopEngine::Asset::read_file_from_assets;
 using LoopEngine::Vulkan::get_format_from_string;
+using LoopEngine::Vulkan::get_blend_op_from_string;
+using LoopEngine::Vulkan::get_blend_factor_from_string;
 
 auto LoopEngine::Graphics::get_module_from_assets(const std::string &filename) -> vk::ShaderModule {
     auto data = read_file_from_assets(filename);
@@ -107,22 +109,40 @@ auto LoopEngine::Graphics::get_material_from_assets(const std::string &filename)
     multisample_state_create_info.setAlphaToCoverageEnable(false);
     multisample_state_create_info.setAlphaToOneEnable(false);
 
-    vk::PipelineColorBlendAttachmentState color_blend_attachment{};
-    color_blend_attachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-    color_blend_attachment.setBlendEnable(true);
-    color_blend_attachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
-    color_blend_attachment.setDstColorBlendFactor(vk::BlendFactor::eOne);
-    color_blend_attachment.setColorBlendOp(vk::BlendOp::eAdd);
-    color_blend_attachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
-    color_blend_attachment.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
-    color_blend_attachment.setAlphaBlendOp(vk::BlendOp::eAdd);
+    vk::ColorComponentFlags default_color_write_mask{};
+    default_color_write_mask |= vk::ColorComponentFlagBits::eR;
+    default_color_write_mask |= vk::ColorComponentFlagBits::eG;
+    default_color_write_mask |= vk::ColorComponentFlagBits::eB;
+    default_color_write_mask |= vk::ColorComponentFlagBits::eA;
 
+    vk::PipelineColorBlendAttachmentState default_color_blend_attachment{};
+    default_color_blend_attachment.setBlendEnable(false);
+    default_color_blend_attachment.setSrcColorBlendFactor(vk::BlendFactor::eOne);
+    default_color_blend_attachment.setDstColorBlendFactor(vk::BlendFactor::eZero);
+    default_color_blend_attachment.setColorBlendOp(vk::BlendOp::eAdd);
+    default_color_blend_attachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
+    default_color_blend_attachment.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
+    default_color_blend_attachment.setAlphaBlendOp(vk::BlendOp::eAdd);
+    default_color_blend_attachment.setColorWriteMask(default_color_write_mask);
+
+    std::vector<vk::PipelineColorBlendAttachmentState> color_blend_attachments{};
+    color_blend_attachments.resize(1, default_color_blend_attachment);
+
+    auto blend = config["blend"];
+    if (blend.IsDefined()) {
+        color_blend_attachments[0].setBlendEnable(true);
+        color_blend_attachments[0].setSrcColorBlendFactor(get_blend_factor_from_string(blend["src_color"].as<std::string>()));
+        color_blend_attachments[0].setDstColorBlendFactor(get_blend_factor_from_string(blend["dst_color"].as<std::string>()));
+        color_blend_attachments[0].setColorBlendOp(get_blend_op_from_string(blend["color_blend_op"].as<std::string>()));
+        color_blend_attachments[0].setSrcAlphaBlendFactor(get_blend_factor_from_string(blend["src_alpha"].as<std::string>()));
+        color_blend_attachments[0].setDstAlphaBlendFactor(get_blend_factor_from_string(blend["dst_alpha"].as<std::string>()));
+        color_blend_attachments[0].setAlphaBlendOp(get_blend_op_from_string(blend["alpha_blend_op"].as<std::string>()));
+    }
     vk::PipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.setLogicOpEnable(false);
     color_blend_state_create_info.setLogicOp(vk::LogicOp::eCopy);
-    color_blend_state_create_info.setAttachmentCount(1);
-    color_blend_state_create_info.setPAttachments(&color_blend_attachment);
     color_blend_state_create_info.setBlendConstants({0.0f, 0.0f, 0.0f, 0.0f});
+    color_blend_state_create_info.setAttachments(color_blend_attachments);
 
     std::vector<vk::DescriptorSetLayout> descriptor_set_layouts{};
     descriptor_set_layouts.emplace_back(Graphics::get_instance()->get_global_descriptor_set_layout());

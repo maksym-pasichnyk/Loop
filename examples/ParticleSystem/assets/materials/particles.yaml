@@ -1,5 +1,12 @@
 vert: shaders/particles.vert
 frag: shaders/particles.frag
+blend:
+  src_color: SrcAlpha
+  dst_color: One
+  src_alpha: One
+  dst_alpha: One
+  color_blend_op: Add
+  alpha_blend_op: Add
 bindings:
   - { binding: 0, stride: 12, instanced: false }
   - { binding: 1, stride: 32, instanced: true }
