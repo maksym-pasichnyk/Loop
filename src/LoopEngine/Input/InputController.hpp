@@ -4,8 +4,6 @@
 #include <unordered_map>
 
 namespace LoopEngine::Input {
-    enum class KeyCode {};
-
     enum class MouseButton {};
 
     enum class ButtonState {
@@ -14,8 +12,8 @@ namespace LoopEngine::Input {
     };
 
     struct AxisBinding {
-        KeyCode positive_key{};
-        KeyCode negative_key{};
+        int positive_key{};
+        int negative_key{};
 
         float positive_value = 0.0f;
         float negative_value = 0.0f;

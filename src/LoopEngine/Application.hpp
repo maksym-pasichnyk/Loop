@@ -9,9 +9,13 @@
 #include "LoopEngine/Asset/AssetSystem.hpp"
 
 namespace LoopEngine {
-    struct Application {
+    struct Application : LoopEngine::Core::Singleton<Application> {
         Application(const char *title, int width, int height);
         void run();
+
+        auto get_event_system() -> LoopEngine::Event::EventSystem* {
+            return &event_system;
+        }
 
     private:
         LoopEngine::Platform::Display display;

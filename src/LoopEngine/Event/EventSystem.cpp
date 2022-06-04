@@ -1,6 +1,9 @@
 #include "EventSystem.hpp"
+#include "LoopEngine/Application.hpp"
 
+using LoopEngine::Application;
 using LoopEngine::Core::Singleton;
-using LoopEngine::Event::EventSystem;
 
-template<> EventSystem* Singleton<EventSystem>::instance = nullptr;
+auto LoopEngine::Event::get_global_event_queue() -> EventSystem* {
+    return Application::get_instance()->get_event_system();
+}

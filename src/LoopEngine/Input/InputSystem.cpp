@@ -1,6 +1,7 @@
 #include "InputSystem.hpp"
 #include "LoopEngine/Platform/Display.hpp"
 #include "LoopEngine/Asset/AssetSystem.hpp"
+#include "LoopEngine/Event/EventSystem.hpp"
 
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
@@ -10,6 +11,7 @@
 using LoopEngine::Core::Singleton;
 using LoopEngine::Platform::Display;
 using LoopEngine::Input::InputSystem;
+using LoopEngine::Event::get_global_event_queue;
 using LoopEngine::Asset::read_file_from_assets;
 
 template<> InputSystem* Singleton<InputSystem>::instance = nullptr;
@@ -63,24 +65,16 @@ void InputSystem::load_config(const std::string &filename) {
         if (type == "button") {
             auto name = it["name"].as<std::string>();
             auto keycode = it["keycode"].as<int>();
-            button_bindings.insert_or_assign(name, KeyCode(keycode));
+            button_bindings.insert_or_assign(name, keycode);
         } else if (type == "axis") {
             auto name = it["name"].as<std::string>();
             auto positive = it["positive"].as<int>();
             auto negative = it["negative"].as<int>();
-            axis_bindings.insert_or_assign(name, AxisBinding{KeyCode(positive), KeyCode(negative)});
+            axis_bindings.insert_or_assign(name, AxisBinding{positive, negative});
         } else {
             spdlog::error("Unknown binding type {}", type);
         }
     }
-}
-
-void InputSystem::add_listener(InputController *controller) {
-    controllers.emplace(controller);
-}
-
-void InputSystem::remove_listener(InputController *controller) {
-    controllers.erase(std::find(controllers.begin(), controllers.end(), controller));
 }
 
 auto InputSystem::get_axis(const std::string &name) const -> float {
@@ -115,21 +109,17 @@ void InputSystem::update(float dt) {
     mouse_delta = mouse_position - prev_mouse_position;
 
     for (auto& [binding, button] : button_bindings) {
-        if (glfwGetKey(window, int(button)) == GLFW_PRESS) {
-            if (button_states[size_t(button)] == ButtonState::Released) {
-                button_states[size_t(button)] = ButtonState::Pressed;
+        if (glfwGetKey(window, button) == GLFW_PRESS) {
+            if (button_states[button] == ButtonState::Released) {
+                button_states[button] = ButtonState::Pressed;
 
-                for (auto& controller : controllers) {
-                    controller->ExecuteAction(binding, ButtonState::Pressed);
-                }
+                get_global_event_queue()->send_event(ButtonPressEvent{binding});
             }
         } else {
-            if (button_states[size_t(button)] == ButtonState::Pressed) {
-                button_states[size_t(button)] = ButtonState::Released;
+            if (button_states[button] == ButtonState::Pressed) {
+                button_states[button] = ButtonState::Released;
 
-                for (auto& controller : controllers) {
-                    controller->ExecuteAction(binding, ButtonState::Released);
-                }
+                get_global_event_queue()->send_event(ButtonReleaseEvent{binding});
             }
         }
     }
@@ -166,9 +156,7 @@ void InputSystem::update(float dt) {
 
         if (flag) {
             auto value = axis.positive_value - axis.negative_value;
-            for (auto& controller : controllers) {
-                controller->ExecuteAxis(binding, value);
-            }
+            get_global_event_queue()->send_event(AxisEvent{binding, value});
         }
     }
 }

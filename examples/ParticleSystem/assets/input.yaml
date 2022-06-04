@@ -9,3 +9,6 @@
 - type: button
   name: sprint
   keycode: 340
+- type: button
+  name: camera
+  keycode: 67

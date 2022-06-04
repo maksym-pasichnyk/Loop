@@ -2,6 +2,7 @@
 #include "spdlog/spdlog.h"
 
 using LoopEngine::Application;
+using LoopEngine::Core::Singleton;
 using LoopEngine::Platform::Display;
 using LoopEngine::Graphics::Context;
 using LoopEngine::Graphics::Graphics;
@@ -14,6 +15,8 @@ using LoopEngine::Event::DrawEvent;
 using LoopEngine::Event::QuitEvent;
 using LoopEngine::Event::UpdateEvent;
 using LoopEngine::Event::EventHandler;
+
+template<> Application *Singleton<Application>::instance = nullptr;
 
 Application::Application(const char *title, int width, int height) : display(width, height, title) {
     input_system.load_config("input.yaml");

@@ -18,7 +18,7 @@ namespace LoopEngine::Event {
     };
     struct QuitEvent {};
 
-    struct EventSystem final : LoopEngine::Core::Singleton<EventSystem> {
+    struct EventSystem {
         template<typename Event>
         void send_event(const Event& event) {
             auto it = handlers.find(typeid(Event).hash_code());
@@ -42,4 +42,6 @@ namespace LoopEngine::Event {
     private:
         std::unordered_map<size_t, std::set<IEventHandler*>> handlers;
     };
+
+    extern auto get_global_event_queue() -> EventSystem*;
 }
