@@ -22,6 +22,132 @@ using LoopEngine::Graphics::context;
 using LoopEngine::Graphics::Graphics;
 using LoopEngine::Camera::get_default_camera;
 
+struct FireworkParticleSystem {
+    FireworkParticleSystem() {
+        rocket_particle_system = std::make_shared<ParticleSystem>(1000);
+        rocket_particle_system->add_event_handler(&rocket_particle_death_handler);
+        rocket_particle_system->add_event_handler(&rocket_particle_system_update_handler);
+        rocket_particle_death_handler.connect<&FireworkParticleSystem::on_rocket_particle_death>(this);
+        rocket_particle_system_update_handler.connect<&FireworkParticleSystem::on_rocket_particle_system_update>(this);
+
+        sparkle_particle_system = std::make_shared<ParticleSystem>(1000);
+        sparkle_particle_system->add_event_handler(&sparkle_particle_system_update_handler);
+        sparkle_particle_system_update_handler.connect<&FireworkParticleSystem::on_sparkle_particle_system_update>(this);
+
+        explosion_particle_system = std::make_shared<ParticleSystem>(1000);
+        explosion_particle_system->add_event_handler(&explosion_particle_system_update_handler);
+        explosion_particle_system_update_handler.connect<&FireworkParticleSystem::on_explosion_particle_system_update>(this);
+    }
+
+    ~FireworkParticleSystem() {
+        rocket_particle_system->remove_event_handler(&rocket_particle_system_update_handler);
+        rocket_particle_system->remove_event_handler(&rocket_particle_death_handler);
+        sparkle_particle_system->remove_event_handler(&sparkle_particle_system_update_handler);
+        explosion_particle_system->remove_event_handler(&explosion_particle_system_update_handler);
+    }
+
+    void update(const UpdateEvent& event) {
+        rocket_particle_system->update(event);
+        sparkle_particle_system->update(event);
+        explosion_particle_system->update(event);
+    }
+
+    void draw(const DrawEvent& event) {
+        rocket_particle_system->draw(event);
+        sparkle_particle_system->draw(event);
+        explosion_particle_system->draw(event);
+    }
+
+private:
+    void on_rocket_particle_system_update(const ParticleSystemUpdateEvent& event) {
+        emit_delay += event.dt;
+        while (emit_delay >= emit_rate) {
+            emit_delay -= emit_rate;
+
+            glm::vec3 direction{};
+            direction.x = std::uniform_real_distribution(-1.0f, 1.0f)(generator);
+            direction.y = 2.0f;//std::uniform_real_distribution(-1.0f, 1.0f)(generator);
+            direction.z = std::uniform_real_distribution(-1.0f, 1.0f)(generator);
+
+            glm::vec4 color{};
+            color.x = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+            color.y = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+            color.z = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+            color.w = 1.0f;
+
+            auto lifetime = std::uniform_real_distribution(1.0f, 2.0f)(generator);
+
+            rocket_particle_system->emit(glm::vec3{}, color, direction * 5.0f, lifetime);
+        }
+
+        for (auto& particle : rocket_particle_system->get_particles()) {
+            if (particle.lifetime <= 0.0f) {
+                continue;
+            }
+            particle.color.w = std::clamp(particle.lifetime / particle.time, 0.0f, 1.0f);
+
+            glm::vec3 direction{};
+            direction.x = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 0.5f;
+            direction.y = 0.0f;
+            direction.z = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 0.5f;
+
+            auto lifetime = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+
+            sparkle_particle_system->emit(particle.position, particle.color, direction, lifetime);
+        }
+    }
+
+    void on_sparkle_particle_system_update(const ParticleSystemUpdateEvent &event) {
+        for (auto& particle : sparkle_particle_system->get_particles()) {
+            if (particle.lifetime <= 0.0f) {
+                continue;
+            }
+            particle.color.w = std::clamp(particle.lifetime / particle.time, 0.0f, 1.0f);
+            particle.velocity.y -= 9.8f * event.dt;
+            particle.velocity.y = std::max(particle.velocity.y, -1.0f);
+        }
+    }
+
+    void on_explosion_particle_system_update(const ParticleSystemUpdateEvent &event) {
+        for (auto& particle : explosion_particle_system->get_particles()) {
+            if (particle.lifetime <= 0.0f) {
+                continue;
+            }
+            particle.color.w = std::clamp(particle.lifetime / particle.time, 0.0f, 1.0f);
+        }
+    }
+
+    void on_rocket_particle_death(const ParticleDeathEvent& event) {
+        for (int i = 0; i < 250; ++i) {
+            glm::vec3 velocity{};
+            velocity.x = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 5.f;
+            velocity.y = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 5.f;
+            velocity.z = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 5.f;
+
+            glm::vec4 color = event.particle.color;
+//        color.x = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+//        color.y = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+//        color.z = std::uniform_real_distribution(0.0f, 1.0f)(generator);
+            color.w = 1.0f;
+
+            explosion_particle_system->emit(event.particle.position, color, velocity, 1.0f);
+        }
+    }
+
+private:
+    float emit_rate = 2.5f;
+    float emit_delay = 0.0f;
+
+    std::default_random_engine generator{};
+    std::shared_ptr<ParticleSystem> rocket_particle_system{};
+    std::shared_ptr<ParticleSystem> sparkle_particle_system{};
+    std::shared_ptr<ParticleSystem> explosion_particle_system{};
+    EventHandler<ParticleSystemUpdateEvent> rocket_particle_system_update_handler{};
+    EventHandler<ParticleSystemUpdateEvent> sparkle_particle_system_update_handler{};
+    EventHandler<ParticleSystemUpdateEvent> explosion_particle_system_update_handler{};
+    EventHandler<ParticleDeathEvent> rocket_particle_death_handler{};
+};
+
 ParticleSystemPlugin::ParticleSystemPlugin() {
     init_event_handler.connect<&ParticleSystemPlugin::init>(this);
     draw_event_handler.connect<&ParticleSystemPlugin::draw>(this);
@@ -33,24 +159,13 @@ ParticleSystemPlugin::ParticleSystemPlugin() {
     get_global_event_queue()->add_event_handler(&update_event_handler);
     get_global_event_queue()->add_event_handler(&press_button_event_handler);
 
-    particle_system = std::make_shared<ParticleSystem>(1000);
-    particle_system->add_event_handler(&particle_system_update_handler);
-
-    particle_system_update_handler.connect<&ParticleSystemPlugin::on_particle_system_update>(this);
-
-    sub_particle_system = std::make_shared<ParticleSystem>(1000);
-    sub_particle_system->add_event_handler(&sub_particle_system_update_handler);
-
-    sub_particle_system_update_handler.connect<&ParticleSystemPlugin::on_sub_particle_system_update>(this);
-
     create_imgui_context();
+
+    firework_particle_system = std::make_shared<FireworkParticleSystem>();
 }
 
 ParticleSystemPlugin::~ParticleSystemPlugin() {
     destroy_imgui_context();
-
-    particle_system->remove_event_handler(&particle_system_update_handler);
-    sub_particle_system->remove_event_handler(&sub_particle_system_update_handler);
 
     get_global_event_queue()->remove_event_handler(&init_event_handler);
     get_global_event_queue()->remove_event_handler(&draw_event_handler);
@@ -63,14 +178,13 @@ void ParticleSystemPlugin::init(const InitEvent &event) {
 
     auto camera = get_default_camera();
     camera->set_perspective(60.0f, 16.0f / 12.0f, 0.1f, 1000.0f);
-    camera->set_transform(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    camera->set_transform(glm::vec3(0.0f, 0.0f, -50.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 void ParticleSystemPlugin::update(const UpdateEvent &event) {
     update_camera(event);
 
-    particle_system->update(event);
-    sub_particle_system->update(event);
+    firework_particle_system->update(event);
 }
 
 void ParticleSystemPlugin::create_imgui_context() {
@@ -119,58 +233,8 @@ void ParticleSystemPlugin::destroy_imgui_context() {
     ImGui::DestroyContext();
 }
 
-void ParticleSystemPlugin::on_particle_system_update(const ParticleSystemUpdateEvent& event) {
-    emit_delay += event.dt;
-    while (emit_delay >= emit_rate) {
-        emit_delay -= emit_rate;
-
-        glm::vec3 direction{};
-        direction.x = 0.0f;//std::uniform_real_distribution(-1.0f, 1.0f)(generator);
-        direction.y = 1.0f;//std::uniform_real_distribution(-1.0f, 1.0f)(generator);
-        direction.z = 0.0f;//std::uniform_real_distribution(-1.0f, 1.0f)(generator);
-
-        glm::vec4 color{};
-        color.x = std::uniform_real_distribution(0.0f, 1.0f)(generator);
-        color.y = std::uniform_real_distribution(0.0f, 1.0f)(generator);
-        color.z = std::uniform_real_distribution(0.0f, 1.0f)(generator);
-        color.w = 1.0f;
-
-        auto lifetime = std::uniform_real_distribution(1.0f, 2.0f)(generator);
-
-        particle_system->emit(glm::vec3{}, color, direction * 5.0f, lifetime);
-    }
-
-    for (auto& particle : particle_system->get_particles()) {
-        if (particle.lifetime <= 0.0f) {
-            continue;
-        }
-        particle.color.w = std::clamp(particle.lifetime / particle.time, 0.0f, 1.0f);
-
-        glm::vec3 direction{};
-        direction.x = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 0.5f;
-        direction.y = 0.0f;
-        direction.z = std::uniform_real_distribution(-1.0f, 1.0f)(generator) * 0.5f;
-
-        auto lifetime = std::uniform_real_distribution(0.0f, 1.0f)(generator);
-
-        sub_particle_system->emit(particle.position, particle.color, direction, lifetime);
-    }
-}
-
-void ParticleSystemPlugin::on_sub_particle_system_update(const ParticleSystemUpdateEvent &event) {
-    for (auto& particle : sub_particle_system->get_particles()) {
-        if (particle.lifetime <= 0.0f) {
-            continue;
-        }
-        particle.color.w = std::clamp(particle.lifetime / particle.time, 0.0f, 1.0f);
-        particle.velocity.y -= 9.8f * event.dt;
-        particle.velocity.y = std::max(particle.velocity.y, -1.0f);
-    }
-}
-
 void ParticleSystemPlugin::draw(const DrawEvent &event) {
-    particle_system->draw(event);
-    sub_particle_system->draw(event);
+    firework_particle_system->draw(event);
 
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -184,7 +248,7 @@ void ParticleSystemPlugin::draw(const DrawEvent &event) {
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), event.cmd, VK_NULL_HANDLE);
 }
 
-void ParticleSystemPlugin::update_camera(const UpdateEvent &event) {
+void ParticleSystemPlugin::update_camera(const UpdateEvent &event) const {
     if (lock_mouse) {
         glfwSetInputMode(Display::get_native_window_handle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     } else {
