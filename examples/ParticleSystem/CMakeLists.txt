@@ -1,4 +1,4 @@
-add_executable(ParticleSystem src/ParticleSystem.cpp src/ParticleSystem.hpp src/ParticleSystemPlugin.cpp src/ParticleSystemPlugin.hpp)
+add_executable(ParticleSystem src/ParticleSystem.cpp src/ParticleSystem.hpp src/ParticleSystemExample.cpp src/ParticleSystemExample.hpp)
 set_target_properties(ParticleSystem PROPERTIES CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 target_link_libraries(ParticleSystem PRIVATE ImGui Loop)
 target_compile_assets(ParticleSystem)

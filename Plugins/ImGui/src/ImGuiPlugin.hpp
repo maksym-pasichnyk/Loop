@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LoopEngine/Lifecycle.hpp"
 #include "LoopEngine/Event/EventSystem.hpp"
 #include "LoopEngine/Event/EventHandler.hpp"
 
@@ -11,22 +12,15 @@ using LoopEngine::Event::EventHandler;
 
 struct ImGuiDrawEvent {};
 
-struct ImGuiPlugin {
-    ImGuiPlugin();
-    ~ImGuiPlugin();
+struct ImGuiPlugin : LoopEngine::Lifecycle<ImGuiPlugin> {
+    friend Lifecycle;
 
 private:
-    void init(const InitEvent& event);
-    static void update(const UpdateEvent& event);
-    static void draw(const AfterDrawEvent& event);
-    void quit(const QuitEvent& event);
+    void on_create();
+    void on_update(float dt);
+    void on_after_draw(vk::CommandBuffer cmd);
+    void on_destroy();
 
 private:
-    EventHandler<InitEvent> init_event_handler{};
-    EventHandler<UpdateEvent> update_event_handler{};
-    EventHandler<AfterDrawEvent> draw_event_handler{};
-    EventHandler<QuitEvent> quit_event_handler{};
-
-    // ImGui
-    vk::DescriptorPool descriptor_pool{};
+    vk::DescriptorPool imgui_descriptor_pool{};
 };

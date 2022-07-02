@@ -7,6 +7,7 @@
 
 #include "LoopEngine/Event/EventSystem.hpp"
 #include "LoopEngine/Graphics/Material.hpp"
+#include "LoopEngine/Graphics/Context.hpp"
 #include "LoopEngine/Graphics/IndexBuffer.hpp"
 #include "LoopEngine/Graphics/VertexBuffer.hpp"
 
@@ -44,8 +45,8 @@ struct ParticleSystem {
     ~ParticleSystem();
 
     void emit(const glm::vec3& position, const glm::vec4 &color, const glm::vec3 &velocity, float lifetime);
-    void update(const UpdateEvent& event);
-    void draw(const DrawEvent& event);
+    void update(float dt);
+    void draw(vk::CommandBuffer cmd);
 
     [[nodiscard]] auto get_particles() -> std::span<Particle> {
         return particles;
@@ -61,12 +62,12 @@ struct ParticleSystem {
 
     template<typename T>
     void add_event_handler(LoopEngine::Event::EventHandler<T>* handler) {
-        event_system.add_event_handler(handler);
+        event_queue.add_event_handler(handler);
     }
 
     template<typename T>
     void remove_event_handler(LoopEngine::Event::EventHandler<T>* handler) {
-        event_system.remove_event_handler(handler);
+        event_queue.remove_event_handler(handler);
     }
 
 private:
@@ -74,7 +75,6 @@ private:
         alignas(16) glm::vec3 position;
         alignas(16) glm::vec4 color;
     };
-
     std::vector<Particle> particles{};
     std::vector<VertexData> positions{};
     size_t count = 0;
@@ -83,5 +83,5 @@ private:
     std::shared_ptr<VertexBuffer> vbo[2]{};
 
     std::shared_ptr<Material> material{};
-    LoopEngine::Event::EventSystem event_system{};
+    LoopEngine::Event::EventQueue event_queue{};
 };

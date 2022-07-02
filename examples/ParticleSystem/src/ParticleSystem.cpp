@@ -16,7 +16,7 @@ using LoopEngine::Graphics::release_vertex_buffer;
 using LoopEngine::Graphics::get_material_from_assets;
 using LoopEngine::Graphics::bind_global_descriptor_sets;
 
-ParticleSystem::ParticleSystem(size_t capacity) {
+ParticleSystem::ParticleSystem(size_t capacity)  {
     positions.resize(capacity);
     particles.resize(capacity);
 
@@ -37,7 +37,7 @@ ParticleSystem::ParticleSystem(size_t capacity) {
 
     update_vertex_buffer(*vbo[0], vertices.data(), sizeof(float) * vertices.size());
 
-    material = get_material_from_assets("materials/particles.yaml");
+    material = get_material_from_assets("materials/particles.material");
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -66,21 +66,21 @@ void ParticleSystem::emit(const glm::vec3 &position, const glm::vec4 &color, con
     }
 }
 
-void ParticleSystem::update(const UpdateEvent& event) {
-    event_system.send_event(ParticleSystemUpdateEvent{ event.dt });
+void ParticleSystem::update(float dt) {
+    event_queue.send_event(ParticleSystemUpdateEvent{dt });
 
     count = 0;
     for (auto& particle : particles) {
         if (particle.lifetime <= 0.0f) {
             continue;
         }
-        particle.lifetime -= event.dt;
-        particle.position += particle.velocity * event.dt;
+        particle.lifetime -= dt;
+        particle.position += particle.velocity * dt;
         positions[count].position = particle.position;
         positions[count].color = particle.color;
         count++;
         if (particle.lifetime <= 0.0f) {
-            event_system.send_event(ParticleDeathEvent{ particle });
+            event_queue.send_event(ParticleDeathEvent{particle });
         }
     }
     if (count > 0) {
@@ -88,13 +88,13 @@ void ParticleSystem::update(const UpdateEvent& event) {
     }
 }
 
-void ParticleSystem::draw(const DrawEvent& event) {
+void ParticleSystem::draw(vk::CommandBuffer cmd) {
     if (count == 0) {
         return;
     }
-    event.cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, material->pipeline);
-    bind_global_descriptor_sets(event.cmd, *material, 0);
-    event.cmd.bindVertexBuffers(0, {vbo[0]->handle, vbo[1]->handle}, {0, 0});
-    event.cmd.bindIndexBuffer(ibo->handle, 0, vk::IndexType::eUint32);
-    event.cmd.drawIndexed(6, count, 0, 0, 0);
+    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, material->pipeline);
+    bind_global_descriptor_sets(cmd, *material, 0);
+    cmd.bindVertexBuffers(0, {vbo[0]->handle, vbo[1]->handle}, {0, 0});
+    cmd.bindIndexBuffer(ibo->handle, 0, vk::IndexType::eUint32);
+    cmd.drawIndexed(6, count, 0, 0, 0);
 }

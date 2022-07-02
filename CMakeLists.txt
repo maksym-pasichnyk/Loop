@@ -15,12 +15,12 @@ add_subdirectory(deps/yaml-cpp)
 add_subdirectory(deps/range-v3)
 add_subdirectory(deps/VulkanMemoryAllocator)
 
-add_subdirectory(AssetBuilder)
+add_subdirectory(Tools)
 
-add_library(Loop STATIC src/LoopEngine/Input/InputSystem.cpp src/LoopEngine/Core/DisableCopyAndMove.hpp src/LoopEngine/Graphics/Graphics.cpp src/LoopEngine/Camera/CameraSystem.cpp src/LoopEngine/Event/EventSystem.cpp src/LoopEngine/Platform/Display.cpp src/LoopEngine/Platform/Display.hpp src/LoopEngine/Camera/CameraSystem.hpp src/LoopEngine/Input/InputController.hpp src/LoopEngine/Input/InputSystem.hpp src/LoopEngine/Event/EventSystem.hpp src/LoopEngine/Graphics/Context.cpp src/LoopEngine/Graphics/Context.hpp src/LoopEngine/Graphics/Material.cpp src/LoopEngine/Graphics/Material.hpp src/LoopEngine/Graphics/Texture.hpp src/LoopEngine/Camera/Camera.hpp src/LoopEngine/Graphics/Graphics.hpp src/LoopEngine/Core/Singleton.hpp src/LoopEngine/Graphics/Texture.cpp src/LoopEngine/Event/Delegate.hpp src/LoopEngine/Graphics/UniformBuffer.cpp src/LoopEngine/Graphics/UniformBuffer.hpp src/LoopEngine/Graphics/IndexBuffer.cpp src/LoopEngine/Graphics/IndexBuffer.hpp src/LoopEngine/Graphics/VertexBuffer.cpp src/LoopEngine/Graphics/VertexBuffer.hpp src/LoopEngine/Event/EventHandler.hpp src/LoopEngine/Application.cpp src/LoopEngine/Application.hpp src/LoopEngine/Asset/AssetSystem.cpp src/LoopEngine/Asset/AssetSystem.hpp src/LoopEngine/Vulkan/Enums.cpp src/LoopEngine/Vulkan/Enums.hpp)
+add_library(Loop STATIC LoopEngine/Input/InputSystem.cpp LoopEngine/Core/DisableCopyAndMove.hpp LoopEngine/Graphics/Graphics.cpp LoopEngine/Camera/CameraSystem.cpp LoopEngine/Event/EventSystem.cpp LoopEngine/Platform/Window.cpp LoopEngine/Platform/Window.hpp LoopEngine/Camera/CameraSystem.hpp LoopEngine/Input/InputSystem.hpp LoopEngine/Event/EventSystem.hpp LoopEngine/Graphics/Context.cpp LoopEngine/Graphics/Context.hpp LoopEngine/Graphics/Material.cpp LoopEngine/Graphics/Material.hpp LoopEngine/Graphics/Texture.hpp LoopEngine/Camera/Camera.hpp LoopEngine/Graphics/Graphics.hpp LoopEngine/Core/Singleton.hpp LoopEngine/Graphics/Texture.cpp LoopEngine/Event/Delegate.hpp LoopEngine/Graphics/UniformBuffer.cpp LoopEngine/Graphics/UniformBuffer.hpp LoopEngine/Graphics/IndexBuffer.cpp LoopEngine/Graphics/IndexBuffer.hpp LoopEngine/Graphics/VertexBuffer.cpp LoopEngine/Graphics/VertexBuffer.hpp LoopEngine/Event/EventHandler.hpp LoopEngine/Application.cpp LoopEngine/Application.hpp LoopEngine/Asset/AssetSystem.cpp LoopEngine/Asset/AssetSystem.hpp LoopEngine/Lifecycle.hpp LoopEngine/VulkanEnums.cpp LoopEngine/VulkanEnums.hpp)
 set_target_properties(Loop PROPERTIES CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 target_link_libraries(Loop PUBLIC glm glfw range-v3 spdlog yaml-cpp Vulkan::Vulkan VulkanMemoryAllocator)
-target_include_directories(Loop PUBLIC src)
+target_include_directories(Loop PUBLIC .)
 target_compile_definitions(Loop PUBLIC
     -D_USE_MATH_DEFINES
     -DGLM_FORCE_XYZW_ONLY
